@@ -1,0 +1,281 @@
+<title>Elección del OCR</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: una columna de lectura (~70ch) con tablas y gráfico que se ensanchan; cada opción tiene un color fijo. */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --fg: #18202b; --muted: #5b6676; --line: #dde2e9;
+  --accent: #1d5a86;
+  --docai: #1d5a86; --glm: #7a4bb5; --tess: #b7791f;
+  --ok: #2f7d4f; --warn: #a8641a; --bad: #b23b3b;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161c; --surface: #1a2029; --fg: #e4e9f0; --muted: #98a3b3; --line: #2c3440;
+  --accent: #6aaee0; --docai: #6aaee0; --glm: #b493e6; --tess: #e0aa55;
+  --ok: #6cc28f; --warn: #e3a05a; --bad: #ec7a7a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161c; --surface: #1a2029; --fg: #e4e9f0; --muted: #98a3b3; --line: #2c3440;
+  --accent: #6aaee0; --docai: #6aaee0; --glm: #b493e6; --tess: #e0aa55;
+  --ok: #6cc28f; --warn: #e3a05a; --bad: #ec7a7a; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15.5px; line-height: 1.6; }
+.page { max-width: 980px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 44px; }
+.prose { max-width: 70ch; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.2; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 42px); font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0; }
+.stack { display: grid; gap: 14px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lead { font-size: 18px; color: var(--fg); }
+.muted { color: var(--muted); }
+code, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+code { font-size: 0.92em; }
+a { color: var(--accent); }
+
+.verdict { border-left: 3px solid var(--docai); padding: 4px 0 4px 18px; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.fact { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.fact .v { font-family: var(--mono); font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.fact .k { font-size: 13.5px; color: var(--muted); }
+
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+thead th { font-family: var(--display); font-size: 15px; font-weight: 600; background: var(--bg); }
+tbody th { font-weight: 500; color: var(--muted); width: 18%; }
+.opt { display: inline-flex; align-items: center; gap: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.d-docai { background: var(--docai); } .d-glm { background: var(--glm); } .d-tess { background: var(--tess); }
+.tag { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
+.t-ok { color: var(--ok); } .t-warn { color: var(--warn); } .t-bad { color: var(--bad); }
+
+.chartbox { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 10px; }
+.chartbox svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13.5px; color: var(--muted); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card .big { font-family: var(--mono); font-size: 22px; font-variant-numeric: tabular-nums; }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14.5px; }
+
+ol.steps { margin: 0; padding-left: 20px; display: grid; gap: 10px; max-width: 70ch; }
+.sources { font-size: 13.5px; color: var(--muted); display: grid; gap: 4px; }
+.sources a { word-break: break-word; }
+</style>
+
+<div class="page">
+
+  <header class="stack prose">
+    <span class="eyebrow">Detector de prácticas duplicadas · extractor</span>
+    <h1>Elección del OCR</h1>
+    <p class="lead">El lote son PDFs escaneados, sin capa de texto: cada página es una imagen de una planilla. Hay que leerla con OCR, y de esa lectura depende todo lo demás, desde los hallazgos hasta las cajas del PDF trazado.</p>
+    <p class="verdict">Para el challenge se eligió <strong>Document AI (Enterprise Document OCR) con un parser propio</strong>. Es la única de las tres opciones que está medida sobre el lote, y los números dan bien en costo, latencia y robustez. Tesseract y GLM-OCR quedan como alternativas a evaluar si el volumen crece: abajo están sus costos estimados.</p>
+  </header>
+
+  <section class="stack">
+    <h2>Lo que se midió con Document AI</h2>
+    <div class="facts">
+      <div class="fact"><span class="v">0,36 s</span><span class="k">por página desde Colab, dentro de GCP: 146 páginas en 53,2 s, en tramos de 15 páginas y sin paralelizar. Desde una PC en Argentina, ~1,4 s por la red</span></div>
+      <div class="fact"><span class="v">USD 0,0015</span><span class="k">por página. El lote completo costó USD 0,219</span></div>
+      <div class="fact"><span class="v">3 de 3</span><span class="k">corridas del mismo PDF dieron exactamente la misma tabla</span></div>
+      <div class="fact"><span class="v">$0,00</span><span class="k">de diferencia entre la suma de las 2.169 filas y el TOTAL impreso, en los 3 PDFs</span></div>
+    </div>
+    <div class="prose stack">
+      <p><strong>Costo.</strong> Se paga por página y no hay nada que operar: ni servidores, ni GPU, ni modelo que actualizar. Para un lote de 146 páginas son 22 centavos de dólar. Comparado con lo que se discute en una rendición (débitos de decenas o cientos de miles de pesos por fila), el costo de leer bien es chico. El costo de leer mal es un hallazgo equivocado frente a un prestador que puede impugnarlo.</p>
+      <p><strong>Latencia.</strong> Medio minuto por PDF desde GCP, sin paralelizar. Desde una PC en Argentina son unos 3,5 minutos para el lote, por la distancia al endpoint en EE. UU.; en producción los workers corren en la misma región que Document AI. El auditor necesita el resultado por lote, en horas, así que la latencia sobra. Si hiciera falta, los requests se pueden paralelizar o se puede usar el modo batch.</p>
+      <p><strong>Robustez.</strong> Es lo que más pesó. Document AI devuelve cada palabra con su caja, y con eso el parser corta las columnas por la posición de los títulos y el trazador marca la fila exacta. Es determinístico: la misma entrada da la misma salida, que es la base de la idempotencia. Y hay un control que no necesita etiquetas: si la suma de las filas da el TOTAL impreso al centavo, no se perdió ni se leyó mal ninguna fila importante.</p>
+    </div>
+  </section>
+
+  <section class="stack">
+    <h2>Las tres opciones</h2>
+    <p class="prose muted">Document AI está medido. Tesseract y GLM-OCR quedan fuera del alcance del challenge: sus números son estimaciones con supuestos explícitos, y les falta una evaluación real sobre estas planillas.</p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th><span class="opt"><span class="dot d-docai"></span>Document AI</span></th>
+            <th><span class="opt"><span class="dot d-tess"></span>Tesseract en Cloud Run (CPU)</span></th>
+            <th><span class="opt"><span class="dot d-glm"></span>GLM-OCR en Cloud Run + GPU L4</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th>Estado</th>
+            <td><span class="tag t-ok">medido</span></td>
+            <td><span class="tag t-warn">estimado</span></td>
+            <td><span class="tag t-warn">estimado</span></td></tr>
+          <tr><th>Qué es</th>
+            <td>Servicio administrado de Google. Se paga por página.</td>
+            <td>Motor de OCR open source, en un contenedor con CPU.</td>
+            <td>Modelo open source de Z.ai (0,9B parámetros) servido con vLLM en una GPU.</td></tr>
+          <tr><th>Costo por 1.000 páginas</th>
+            <td class="num">USD 1,50 hasta 5M págs/mes<br>USD 0,60 desde 5M</td>
+            <td class="num">≈ USD 0,03 – 0,11</td>
+            <td class="num">≈ USD 0,16 – 0,65<br><span class="muted">+ piso si se mantiene una instancia prendida</span></td></tr>
+          <tr><th>Supuesto de velocidad</th>
+            <td class="num">0,36 s/pág (medido)</td>
+            <td class="num">0,8 – 3 s/pág por vCPU</td>
+            <td class="num">0,75 – 3 págs/s por GPU<br><span class="muted">Z.ai reporta 1,86, sin decir en qué GPU</span></td></tr>
+          <tr><th>Caja de cada palabra</th>
+            <td><span class="tag t-ok">sí</span> tokens con caja normalizada</td>
+            <td><span class="tag t-ok">sí</span> salida TSV / hOCR por palabra</td>
+            <td><span class="tag t-warn">a verificar</span> devuelve texto estructurado; hay que ver si alcanza para cajas por fila</td></tr>
+          <tr><th>Calidad en estas planillas</th>
+            <td>Checksum al centavo en 146 páginas</td>
+            <td>Sin medir. Las tablas escaneadas y los importes con coma suelen requerir preprocesado</td>
+            <td>Sin medir. Buenos resultados en benchmarks públicos, publicados por el propio fabricante</td></tr>
+          <tr><th>Operación</th>
+            <td>Nada que operar. Cuotas por proyecto, ampliables</td>
+            <td>Contenedor simple. Escala con CPU</td>
+            <td>Imagen con el modelo, GPU, arranque en frío, actualizaciones del modelo</td></tr>
+          <tr><th>Datos</th>
+            <td>Las páginas salen hacia la API de Google</td>
+            <td>Todo queda en nuestro proyecto</td>
+            <td>Todo queda en nuestro proyecto</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="stack">
+    <h2>Con 1.000.000 de páginas por día</h2>
+    <p class="prose">Son 11,6 páginas por segundo en promedio, unas 30 millones por mes. El gráfico muestra el costo mensual según el volumen diario. En las opciones estimadas, la línea es el caso base y la franja va del caso pesimista al optimista.</p>
+
+    <div class="chartbox">
+      <svg id="chart" viewBox="0 0 900 430" role="img" aria-label="Costo mensual en dólares según páginas por día, en escala logarítmica, para Document AI, GLM-OCR en GPU y Tesseract en CPU"></svg>
+      <div class="legend">
+        <span class="opt"><span class="dot d-docai"></span>Document AI (precio de lista)</span>
+        <span class="opt"><span class="dot d-glm"></span>GLM-OCR en L4 (1,5 págs/s; franja 0,75 – 3), con una instancia siempre prendida</span>
+        <span class="opt"><span class="dot d-tess"></span>Tesseract en CPU (1,5 s/pág; franja 0,8 – 3)</span>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h3 class="opt"><span class="dot d-docai"></span>Document AI</h3>
+        <span class="big">≈ USD 22.500 / mes</span>
+        <ul>
+          <li>5M págs a USD 1,50 + 25M a USD 0,60 por 1.000. Promedio: USD 0,75 por 1.000, unos USD 750 por día.</li>
+          <li>Hay un plan de ahorro con compromiso a 3 años que baja el primer tramo a USD 0,48 por 1.000.</li>
+          <li><strong>Escalar es agregar workers propios</strong>, que mandan requests en paralelo desde la misma región que Document AI. Cada request de 15 páginas tardó ~4,6 s desde Colab, o sea ~3,3 págs/s por worker: el promedio pide ~4 en paralelo, y los picos unos 10–12.</li>
+          <li>La cuota online es de 120 requests por minuto por tipo de procesador (US/EU): con 15 páginas por request son 30 págs/s, 2,6 veces el promedio. Se puede pedir más cuota.</li>
+          <li>Para volumen sostenido conviene el modo batch: asíncrono, sobre Cloud Storage, hasta 5 lotes en paralelo por proyecto.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="opt"><span class="dot d-glm"></span>GLM-OCR en Cloud Run + L4</h3>
+        <span class="big">≈ USD 4.800 – 19.400 / mes</span>
+        <ul>
+          <li>Una instancia con L4, 4 vCPU y 16 GiB (el mínimo que exige la GPU) cuesta ~USD 1,05 por hora, sin redundancia zonal.</li>
+          <li>Caso base (1,5 págs/s por GPU, 60 % de uso efectivo): ~13 instancias facturadas en promedio, unos USD 9.700 por mes.</li>
+          <li><strong>Escalar es sumar instancias con GPU.</strong> Cloud Run escala solo, pero la cuota inicial de GPU es baja (unas 3 L4 por región) y hay que pedir más. Cada instancia nueva tarda en cargar el modelo, así que conviene dejar algunas siempre prendidas.</li>
+          <li>Abajo de cierto volumen, el piso de una instancia prendida (~USD 760 por mes) la hace más cara que Document AI.</li>
+          <li>Falta sumar la operación: armar la imagen, monitorear, actualizar el modelo.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="opt"><span class="dot d-tess"></span>Tesseract en Cloud Run (CPU)</h3>
+        <span class="big">≈ USD 900 – 3.300 / mes</span>
+        <ul>
+          <li>vCPU + 2 GiB por vCPU: ~USD 0,000022 por segundo de vCPU.</li>
+          <li>Caso base (1,5 s/pág): ~17 vCPU en promedio, unas 5 instancias de 4 vCPU, unos USD 1.650 por mes.</li>
+          <li><strong>Escalar es trivial:</strong> cada página es independiente y alcanza con sumar CPU.</li>
+          <li>El riesgo está en la calidad, no en el costo. Un OCR open source en CPU que probamos al principio (RapidOCR) tardó ~23 s por página en una notebook, 15 veces más que el caso base: estas estimaciones pueden estar muy lejos.</li>
+          <li>Un error de lectura cuesta más que el OCR: un débito mal calculado o un auditor revisando un falso positivo.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack prose">
+    <h2>Qué haría con ese volumen</h2>
+    <ol class="steps">
+      <li><strong>No pagar OCR por lo que no lo necesita.</strong> El splitter ya separa las páginas con capa de texto. Esas, y los Excel o TXT, van a un extractor interno sin costo. No está implementado por tiempo (en este lote no hay páginas con texto), pero es la intención del diseño. La caché por hash evita pagar dos veces el mismo lote.</li>
+      <li><strong>Seguir con Document AI mientras se evalúan las alternativas.</strong> En modo batch, con la cuota ampliada y negociando el precio por volumen.</li>
+      <li><strong>Evaluar GLM-OCR y Tesseract sobre las mismas planillas.</strong> El checksum contra el TOTAL impreso hace barata esa evaluación, porque no requiere etiquetar nada. Se compara también fila por fila contra Document AI.</li>
+      <li><strong>Si alguna alternativa pasa, armar un esquema híbrido.</strong> Por ejemplo, la opción barata para la mayoría de las páginas y Document AI cuando el checksum no cuadra. El costo baja sin resignar robustez.</li>
+    </ol>
+  </section>
+
+  <section class="stack">
+    <h2>Supuestos y fuentes</h2>
+    <div class="sources prose">
+      <p>Los precios son de lista, en USD, para regiones de nivel 1, y hay que verificarlos antes de usarlos. Para Cloud Run: L4 a USD 0,0001867/s sin redundancia zonal, vCPU a USD 0,000018/s y memoria a USD 0,000002/GiB·s. El uso efectivo de 60 % cubre los picos y el escalado. Las velocidades de Tesseract y GLM-OCR son rangos indicativos, no mediciones propias.</p>
+      <a href="https://cloud.google.com/document-ai/pricing">Document AI · precios</a>
+      <a href="https://docs.cloud.google.com/document-ai/quotas">Document AI · cuotas</a>
+      <a href="https://docs.cloud.google.com/document-ai/limits">Document AI · límites por request</a>
+      <a href="https://cloud.google.com/run/pricing">Cloud Run · precios</a>
+      <a href="https://docs.cloud.google.com/run/docs/configuring/services/gpu">Cloud Run · GPU (mínimos de CPU y memoria, cuota)</a>
+      <a href="https://rits.shanghai.nyu.edu/ai/glm-ocr-z-ais-0-9b-model-takes-the-top-spot-on-document-understanding-benchmarks/">GLM-OCR · tamaño y benchmarks</a>
+      <a href="https://gigazine.net/gsc_news/en/20260204-z-ai-glm-ocr">GLM-OCR · velocidad reportada por Z.ai</a>
+      <a href="https://imagetotable.ai/blog/ocr-speed-vs-accuracy-tradeoff">Tesseract · rangos de velocidad (indicativos)</a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  const svg = document.getElementById("chart");
+  const W = 900, H = 430, m = { l: 74, r: 24, t: 18, b: 52 };
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const x0 = Math.log10(1e4), x1 = Math.log10(2e6), y0 = Math.log10(10), y1 = Math.log10(1e5);
+  const X = v => m.l + (Math.log10(v) - x0) / (x1 - x0) * (W - m.l - m.r);
+  const Y = v => H - m.b - (Math.log10(Math.max(v, 10)) - y0) / (y1 - y0) * (H - m.t - m.b);
+
+  const docai = d => { const p = d * 30; return Math.min(p, 5e6) * 1.5e-3 + Math.max(p - 5e6, 0) * 0.6e-3; };
+  const l4 = 0.0001867 + 4 * 0.000018 + 16 * 0.000002, piso = l4 * 3600 * 730;
+  const glm = pps => d => Math.max(piso, d * 30 / (pps * 0.6) * l4);
+  const tess = s => d => d * 30 * s / 0.6 * (0.000018 + 2 * 0.000002);
+
+  const xs = []; for (let e = x0; e <= x1 + 1e-9; e += 0.02) xs.push(Math.pow(10, e));
+  const line = f => xs.map((d, i) => (i ? "L" : "M") + X(d).toFixed(1) + " " + Y(f(d)).toFixed(1)).join(" ");
+  const band = (lo, hi) => line(hi) + " " + xs.slice().reverse().map(d => "L" + X(d).toFixed(1) + " " + Y(lo(d)).toFixed(1)).join(" ") + " Z";
+  const el = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]); if (text != null) n.textContent = text; svg.appendChild(n); return n; };
+
+  function draw() {
+    svg.textContent = "";
+    const muted = css("--muted"), lineC = css("--line"), fg = css("--fg");
+    [10, 100, 1e3, 1e4, 1e5].forEach(v => {
+      el("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: lineC, "stroke-width": 1 });
+      el("text", { x: m.l - 10, y: Y(v) + 4, "text-anchor": "end", fill: muted, "font-size": 12, "font-family": css("--mono") },
+        "USD " + (v >= 1e3 ? (v / 1e3) + "k" : v));
+    });
+    [[1e4, "10k"], [1e5, "100k"], [1e6, "1M"], [2e6, "2M"]].forEach(([v, t]) => {
+      el("line", { x1: X(v), x2: X(v), y1: m.t, y2: H - m.b, stroke: lineC, "stroke-width": 1 });
+      el("text", { x: X(v), y: H - m.b + 20, "text-anchor": "middle", fill: muted, "font-size": 12, "font-family": css("--mono") }, t);
+    });
+    el("text", { x: (m.l + W - m.r) / 2, y: H - 10, "text-anchor": "middle", fill: muted, "font-size": 12.5, "font-family": css("--body") }, "páginas por día (escala logarítmica)");
+    el("text", { x: 16, y: (m.t + H - m.b) / 2, "text-anchor": "middle", fill: muted, "font-size": 12.5, "font-family": css("--body"),
+      transform: `rotate(-90 16 ${(m.t + H - m.b) / 2})` }, "costo por mes");
+
+    el("path", { d: band(glm(3), glm(0.75)), fill: css("--glm"), "fill-opacity": 0.14, stroke: "none" });
+    el("path", { d: band(tess(0.8), tess(3)), fill: css("--tess"), "fill-opacity": 0.16, stroke: "none" });
+    el("path", { d: line(tess(1.5)), fill: "none", stroke: css("--tess"), "stroke-width": 2.5 });
+    el("path", { d: line(glm(1.5)), fill: "none", stroke: css("--glm"), "stroke-width": 2.5 });
+    el("path", { d: line(docai), fill: "none", stroke: css("--docai"), "stroke-width": 3 });
+
+    const mx = X(1e6);
+    el("line", { x1: mx, x2: mx, y1: m.t, y2: H - m.b, stroke: fg, "stroke-width": 1, "stroke-dasharray": "4 4", opacity: 0.5 });
+    [[docai(1e6), "--docai", "≈ 22,5k"], [glm(1.5)(1e6), "--glm", "≈ 9,7k"], [tess(1.5)(1e6), "--tess", "≈ 1,7k"]].forEach(([v, c, t]) => {
+      el("circle", { cx: mx, cy: Y(v), r: 4.5, fill: css(c), stroke: css("--surface"), "stroke-width": 1.5 });
+      el("text", { x: mx - 10, y: Y(v) - 9, "text-anchor": "end", fill: css(c), "font-size": 12.5, "font-weight": 600, "font-family": css("--mono") }, t);
+    });
+  }
+  draw();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>

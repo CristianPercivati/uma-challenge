@@ -1,0 +1,7 @@
+pymupdf
+google-genai
+google-auth
+python-dotenv
+requests
+pandas
+pydantic

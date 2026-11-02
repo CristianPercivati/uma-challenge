@@ -1,0 +1,26 @@
+# Datos: nada del lote entra al repo (PDFs, extracción, golden, salidas)
+data/*
+!data/README.md
+salida/
+eval/
+*.pdf
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.sqlite
+*.sqlite3
+*.db
+docai_*.json
+llm_*.json
+
+# Configuración local (endpoint, proyecto, credenciales)
+.env
+*service-account*.json
+*sa-key*.json
+
+# Entorno
+__pycache__/
+.ipynb_checkpoints/
+.venv/
